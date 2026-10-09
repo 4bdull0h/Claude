@@ -12,6 +12,7 @@ live systems, no weaponized exploits).
 |---|---------|---------|-------|----------|--------|------------|
 | 1 | [`lbr38/repomanager`](https://github.com/lbr38/repomanager) | `dist` parameter path traversal &rarr; arbitrary directory deletion/creation outside repo root | CWE-22 / CWE-23 | Medium–High (authenticated) | **Confirmed (code-level PoC)**, [details](./repomanager-dist-path-traversal.md) | [packet](./VULNCHECK-SUBMISSION.md) |
 | 2 | [`lbr38/repomanager`](https://github.com/lbr38/repomanager) | Unsanitized `controller` POST param in `include_once` &rarr; authenticated PHP file inclusion (RCE if a `.php` plant exists) | CWE-98 / CWE-22 | High (authenticated; RCE contingent) | **Confirmed (PoC of include sink)**, [details](./repomanager-lfi-controller.md) | [packet](./VULNCHECK-SUBMISSION-2-lfi.md) |
+| 3 | [`tuxxin/iNetPanel`](https://github.com/tuxxin/iNetPanel) | `get_user`/`list_domains` accounts-API actions skip the assigned-domain scope check their siblings enforce &rarr; `subadmin` reads any tenant's account/domain config (IDOR) | CWE-639 / CWE-285 | Medium (authenticated subadmin; cross-tenant info disclosure) | **Confirmed (code-level authorization asymmetry)**, [details](./inetpanel-accounts-idor.md) | [packet](./VULNCHECK-SUBMISSION-3-inetpanel-idor.md) |
 
 ### Lower-severity observations (same audit)
 - repomanager: single-level traversal via `name`/`section`; admin-only SSRF in GPG key import; `rm -rf "$path"` antipattern; no CSRF token check on the AJAX dispatcher. See the detailed reports.

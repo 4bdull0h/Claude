@@ -38,6 +38,17 @@ One place for everything you need to submit. Channel for all of these:
 - **PoC:** [`poc/lfi-controller-poc.php`](./poc/lfi-controller-poc.php) — confirmed include-sink executes a traversed `.php`
 - **One-line:** `$_POST['controller']` is concatenated unsanitized into `include_once(ROOT.'/controllers/ajax/'.$controller.'.php')`.
 
+## Submission 3 — iNetPanel accounts API IDOR  ☐ not submitted
+
+- **Supplier / product:** tuxxin / **iNetPanel** (self-hosted hosting control panel)
+- **Version:** 1.28.0, `main` @ `9b8c2e46afcef006c6f81871fb7857b4e9fd03c4` (2026-10-09)
+- **Type:** CWE-639 / CWE-285 broken object-level authorization (authenticated `subadmin`)
+- **Impact:** a limited `subadmin` reads any tenant's account + domain config (document roots, ports, PHP versions, WireGuard IPs) outside their assigned-domain scope
+- **Suggested CVSS 3.1:** `AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N` → ~4.3 (use `C:H` → ~6.5 if topology is deemed sensitive)
+- **Full packet to paste:** [`VULNCHECK-SUBMISSION-3-inetpanel-idor.md`](./VULNCHECK-SUBMISSION-3-inetpanel-idor.md)
+- **Technical write-up:** [`inetpanel-accounts-idor.md`](./inetpanel-accounts-idor.md)
+- **One-line:** `get_user`/`list_domains` in `api/accounts.php` omit the `canAccessDomain`/assigned-domain check that `detail`/`list`/`list_users` apply.
+
 ---
 
 ### Recommended order
