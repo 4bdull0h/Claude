@@ -2,14 +2,15 @@
 
 Open-ended audit of self-hosted open-source web apps, for **responsible
 disclosure** to maintainers. Targets chosen by the auditor; everything here is
-static source review of public code, framed for coordinated disclosure (no
-attacks on live systems, no weaponized exploits).
+source review of public code (one finding also confirmed with a code-level PoC
+against a throwaway sandbox), framed for coordinated disclosure (no attacks on
+live systems, no weaponized exploits).
 
 ## Findings
 
 | # | Project | Finding | Class | Severity | Status |
 |---|---------|---------|-------|----------|--------|
-| 1 | [`lbr38/repomanager`](https://github.com/lbr38/repomanager) | `dist` parameter path traversal → arbitrary directory deletion/creation outside repo root | CWE-22 / CWE-23 | Medium–High (authenticated) | Draft, [details](./repomanager-dist-path-traversal.md) |
+| 1 | [`lbr38/repomanager`](https://github.com/lbr38/repomanager) | `dist` parameter path traversal &rarr; arbitrary directory deletion/creation outside repo root | CWE-22 / CWE-23 | Medium–High (authenticated) | **Confirmed (code-level PoC)**, [details](./repomanager-dist-path-traversal.md) |
 
 ### Lower-severity observations (same audit)
 - repomanager: single-level traversal via `name`/`section`; admin-only SSRF in GPG key import; `rm -rf "$path"` antipattern. See the detailed report.

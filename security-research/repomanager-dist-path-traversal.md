@@ -5,7 +5,7 @@
 **Vulnerability class:** CWE-22 / CWE-23 — Improper limitation of a pathname to a restricted directory (path traversal)
 **Impact:** Arbitrary recursive directory **deletion**, arbitrary directory **creation**, and controlled-filename file writes **outside the repository root**, executed as the repomanager service account
 **Privilege required:** Authenticated user permitted to create / rebuild a Debian repository task
-**Status:** Unconfirmed by maintainer — this is a draft for responsible disclosure, not a published CVE.
+**Status:** Code-level PoC **confirmed** (validator + delete sink exercised with the project's own classes, 2026-10-09); not yet validated against a full running deployment; not reported to maintainer yet; not a published CVE.
 
 > ⚠️ This document is for responsible disclosure to the maintainer. It contains no
 > ready-to-run exploit payload beyond what is necessary to demonstrate the flaw.
@@ -176,6 +176,39 @@ reachable *for this parameter* — but `../` inside the quotes is still honored 
 
 ---
 
+## Verification (code-level PoC)
+
+Confirmed on 2026-10-09 by loading the project's **own** `Controllers\Utils\Validate`
+and `Controllers\Task\Form\Param\Dist` classes and exercising the validator, then
+reproducing the exact path construction from `Repo\Metadata\Create` and the same
+`rm -rf "<path>"` form used by `Filesystem\Directory::deleteRecursive()` against a
+throwaway sandbox. The harness is `poc/verify.php` (run:
+`php poc/verify.php <repomanager_clone> <empty_sandbox_dir>`).
+
+Observed output (abridged):
+
+```
+STEP 1: real Param\Dist::check() —
+  ACCEPTED : bookworm
+  ACCEPTED : ../../../../../../../../tmp        <-- traversal accepted
+  rejected : ..%2f..%2f                          (literal %2f is not a real '/')
+  ACCEPTED : a/../../../b                         <-- traversal accepted
+
+STEP 2: path build + rm -rf form on sandbox (REPOS_DIR = <sandbox>/home/repo) —
+  dist               = ../../../../VICTIM
+  snapshotPath       = <sandbox>/home/repo/deb/myrepo/../../../../VICTIM/main/<date>
+  realpath           = <sandbox>/VICTIM/main/<date>      <-- OUTSIDE REPOS_DIR
+  canary before      = YES
+  rm -rf "<snapshotPath>"  (exit 0)
+  canary after       = NO -> DELETED via traversal
+  inside REPOS_DIR?  = NO (escaped)
+```
+
+This confirms both halves of the chain at the code level: the validator admits
+`../` sequences, and the resulting path escapes `REPOS_DIR` when handed to the
+delete sink. It does **not** yet prove the HTTP-to-sink wiring on a live install
+(auth/permission gating, task scheduling) — see the scope note below.
+
 ## Remediation
 
 Validate `dist` (and, defensively, `section`/`name`) as a **single safe path
@@ -251,8 +284,11 @@ The repository has **no `SECURITY.md`**. Recommended path:
 ---
 
 ### Audit scope note
-This review was source-only (static) against a shallow `devel` clone; it was
-**not** validated against a running instance. Before publishing, confirm the
-end-to-end behavior on a disposable test deployment (create a deb repo task with a
-traversing `dist` pointing at a throwaway directory and observe the resolved
-`rm -rf` / `mkdir` target in the task log).
+The validator gap and the path-traversal reaching the delete sink are **confirmed
+at the code level** (see Verification above, using the project's own classes). What
+remains unproven is the **live HTTP-to-sink wiring**: that a logged-in user with the
+relevant repo permission can drive a deb repo/task create or rebuild all the way to
+`Metadata\Deb::create()` / `Metadata\Create` with an attacker-chosen `dist`, and the
+exact permission required. Before publishing, confirm this on a disposable test
+deployment (submit a deb repo task with a traversing `dist` pointing at a throwaway
+directory and observe the resolved `rm -rf` / `mkdir` target in the task log).
