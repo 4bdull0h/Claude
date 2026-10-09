@@ -18,6 +18,9 @@ live systems, no weaponized exploits).
 ### Lower-severity observations (same audit)
 - repomanager: single-level traversal via `name`/`section`; admin-only SSRF in GPG key import; `rm -rf "$path"` antipattern; no CSRF token check on the AJAX dispatcher. See the detailed reports.
 
+- **[`imehdiha/cardpay`](https://github.com/imehdiha/cardpay)** — card-to-card payment gateway (PHP/MySQL, HMAC API, SMS matching, webhooks; ~27★, new). Audited the money paths:
+  device API (HMAC-SHA256 + timestamp tolerance + nonce replay table + `hash_equals`; shortcut path uses a per-device bearer secret compared with `hash_equals`), merchant API (`ApiAuthService` canonical covers method/path/query/`sha256(body)`/ts/nonce, replay-protected), payment `status/verify/cancel` (scoped via `findForApplication(publicId, app.id)` — no IDOR), the unauthenticated buyer page (CSRF + rate-limited; `storeReceipt` validates MIME via `finfo`, random filename, fixed dir — no upload RCE/traversal), card numbers encrypted at rest. **No submittable vulnerability.**
+
 ### Leads investigated and ruled out (honest negatives)
 - repomanager **command injection via malicious upstream mirror**: the Deb index path (`xz`/`bunzip2` on a remote-named file) is gated by an `in_array` allow-list built from the admin-validated `section`/`arch`, so remote metacharacters can't survive; the RPM `modifyrepo --mdtype=… <file>` path uses a hardcoded `additionalMetadataFiles` array. Both **not exploitable**.
 - repomanager SQL injection: models use prepared statements (≈320 `prepare` vs the only interpolated queries using an internal `$tableName`). No user-driven SQLi found.
