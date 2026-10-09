@@ -36,6 +36,8 @@ live systems, no weaponized exploits).
 
 - **[`izzipizzy/slimtds`](https://github.com/izzipizzy/slimtds)** — traffic-distribution system (Slim 4 + PostgreSQL, ~30k LOC, ~34★, new). Redirect destination in `Engine/ClickHandler` comes from offer/campaign config (macro-expanded), not a request param — macros only append sub-params to the configured URL, no attacker host control (no open redirect); production SQL uses prepared statements (raw interpolation only in tests). Has a browser/integration test suite. No finding on the audited path.
 
+- **[`InvoicePlane/InvoicePlane`](https://github.com/InvoicePlane/InvoicePlane)** — invoicing app (legacy CodeIgniter, ~61k LOC, ~3.1k★). Checked the unauthenticated `guest/` module: the invoice/quote viewer looks up by the random `invoice_url_key` GUID through auto-escaped active-record under a `guest_visible()` scope (not enumerable → no IDOR/SQLi); production SQL is parameterized (string concatenation only in the installer for internal table names). Shows recent hardening (e.g. explicit strtotime type-juggling guard). No finding on the audited path.
+
 ### Leads investigated and ruled out (honest negatives)
 - repomanager **command injection via malicious upstream mirror**: the Deb index path (`xz`/`bunzip2` on a remote-named file) is gated by an `in_array` allow-list built from the admin-validated `section`/`arch`, so remote metacharacters can't survive; the RPM `modifyrepo --mdtype=… <file>` path uses a hardcoded `additionalMetadataFiles` array. Both **not exploitable**.
 - repomanager SQL injection: models use prepared statements (≈320 `prepare` vs the only interpolated queries using an internal `$tableName`). No user-driven SQLi found.
