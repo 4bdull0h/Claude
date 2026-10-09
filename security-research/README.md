@@ -46,6 +46,13 @@ live systems, no weaponized exploits).
   `download.php` uses the raw `image` param for the *thumbnail* path — is **not practically exploitable** (only
   reached when `IMAGES/basename(image)` is already an existing image with a valid extension, so the leaf filename
   can't be an arbitrary sensitive file). **No confirmable, submittable vulnerability** in the audited surface.
+- **[`gumslone/GumCP`](https://github.com/gumslone/GumCP)** — Raspberry-Pi web control panel with command buttons, HTTP API and SSH execution (~170★).
+  Despite being a low-star command-runner, it is **exceptionally hardened**: `include/auth.php` fails closed, uses CSRF
+  tokens, `hash_equals`, per-IP login throttling, `session_regenerate_id`, and refuses to trust `X-Forwarded-For`;
+  the unauthenticated `api.php` executes only pre-configured button commands gated by a 128-bit bearer hash
+  (`^[a-f0-9]{32}$` + `hash_equals` + throttle + IP allow-list); `setup.php` restricts to private REMOTE_ADDR and
+  self-disables after configuration. Command execution via `execute_command.php`/`ajax.php` is intended authenticated-
+  admin functionality (no privilege boundary crossed). **No submittable vulnerability.**
 
 ## Method (reusable)
 
