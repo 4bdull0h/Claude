@@ -37,6 +37,15 @@ live systems, no weaponized exploits).
   validates the `hl` language param with `^[a-z]+$` (no LFI); image upload is login-gated. Weaknesses are design-level
   only (plaintext password compared from config, `crc32` session value, admin-only SSRF via `parse_link`) — **no
   confirmable, submittable vulnerability**.
+- **[`PhotoboothProject/photobooth`](https://github.com/PhotoboothProject/photobooth)** — Raspberry-Pi photo-booth web app (~680★, ~25k LOC, `dev`). Chosen as a
+  shell-out-heavy target. Audited every web-reachable `exec`/`shell_exec` endpoint (`print`, `shellCommand`,
+  `applyEffects`, `applyVideoEffects`, `previewCamera`, `liveChromaConfig`) and the file read/delete endpoints
+  (`download`, `deletePhoto`). Consistently hardened: per-request CSRF tokens (`hash_equals`), filename
+  allow-list `^[A-Za-z0-9._-]+$` + `basename()`, `escapeshellarg()` on all user-derived args, mode allow-lists via
+  `switch`, and `(int)` casts; command templates come from admin config, not request input. One quirk —
+  `download.php` uses the raw `image` param for the *thumbnail* path — is **not practically exploitable** (only
+  reached when `IMAGES/basename(image)` is already an existing image with a valid extension, so the leaf filename
+  can't be an arbitrary sensitive file). **No confirmable, submittable vulnerability** in the audited surface.
 
 ## Method (reusable)
 
