@@ -30,6 +30,13 @@ live systems, no weaponized exploits).
   rate-limited share passwords). **No confirmable vulnerability found** in the
   code reachable in the repo; Pro features depend on a closed-source bundle not
   present. Recorded as a negative result rather than a manufactured finding.
+- **[`m1k1o/blog`](https://github.com/m1k1o/blog)** — lightweight self-hosted PHP blog (~300★, ~4k LOC). Audited the AJAX dispatcher
+  (`call_user_func(['Post', $action], $request)`), DB layer, auth/session, upload, and i18n. Reasonably hardened:
+  all state-changing `Post` methods call `login_protected()`; queries use bound PDO params (the public `load()`
+  feed binds its `loc`/`person`/`tag` filters); the AJAX dispatcher enforces a per-session CSRF token; `Lang::load`
+  validates the `hl` language param with `^[a-z]+$` (no LFI); image upload is login-gated. Weaknesses are design-level
+  only (plaintext password compared from config, `crc32` session value, admin-only SSRF via `parse_link`) — **no
+  confirmable, submittable vulnerability**.
 
 ## Method (reusable)
 
