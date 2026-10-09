@@ -8,12 +8,17 @@ live systems, no weaponized exploits).
 
 ## Findings
 
-| # | Project | Finding | Class | Severity | Status |
-|---|---------|---------|-------|----------|--------|
-| 1 | [`lbr38/repomanager`](https://github.com/lbr38/repomanager) | `dist` parameter path traversal &rarr; arbitrary directory deletion/creation outside repo root | CWE-22 / CWE-23 | Medium–High (authenticated) | **Confirmed (code-level PoC)**, [details](./repomanager-dist-path-traversal.md) |
+| # | Project | Finding | Class | Severity | Status | Submission |
+|---|---------|---------|-------|----------|--------|------------|
+| 1 | [`lbr38/repomanager`](https://github.com/lbr38/repomanager) | `dist` parameter path traversal &rarr; arbitrary directory deletion/creation outside repo root | CWE-22 / CWE-23 | Medium–High (authenticated) | **Confirmed (code-level PoC)**, [details](./repomanager-dist-path-traversal.md) | [packet](./VULNCHECK-SUBMISSION.md) |
+| 2 | [`lbr38/repomanager`](https://github.com/lbr38/repomanager) | Unsanitized `controller` POST param in `include_once` &rarr; authenticated PHP file inclusion (RCE if a `.php` plant exists) | CWE-98 / CWE-22 | High (authenticated; RCE contingent) | **Confirmed (PoC of include sink)**, [details](./repomanager-lfi-controller.md) | [packet](./VULNCHECK-SUBMISSION-2-lfi.md) |
 
 ### Lower-severity observations (same audit)
-- repomanager: single-level traversal via `name`/`section`; admin-only SSRF in GPG key import; `rm -rf "$path"` antipattern. See the detailed report.
+- repomanager: single-level traversal via `name`/`section`; admin-only SSRF in GPG key import; `rm -rf "$path"` antipattern; no CSRF token check on the AJAX dispatcher. See the detailed reports.
+
+### Leads investigated and ruled out (honest negatives)
+- repomanager **command injection via malicious upstream mirror**: the Deb index path (`xz`/`bunzip2` on a remote-named file) is gated by an `in_array` allow-list built from the admin-validated `section`/`arch`, so remote metacharacters can't survive; the RPM `modifyrepo --mdtype=… <file>` path uses a hardcoded `additionalMetadataFiles` array. Both **not exploitable**.
+- repomanager SQL injection: models use prepared statements (≈320 `prepare` vs the only interpolated queries using an internal `$tableName`). No user-driven SQLi found.
 
 ## Targets audited with no confirmed vulnerability
 
