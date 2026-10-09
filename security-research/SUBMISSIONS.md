@@ -60,6 +60,17 @@ One place for everything you need to submit. Channel for all of these:
 - **Technical write-up:** [`smskit-poll-unauth-sms-interception.md`](./smskit-poll-unauth-sms-interception.md)
 - **One-line:** `api/v1/poll.php` requires no auth, auto-registers any `device_id`, and returns queued SMS `to`/`message` to it (runtime-confirmed).
 
+## Submission 5 — EverShelf unauthenticated Telegram webhook  ☐ not submitted  ⚠️ Low/borderline
+
+- **Supplier / product:** dadaloop82 / **EverShelf** (self-hosted pantry manager)
+- **Version:** 1.11.9, `main` @ `8923b468510be592f38eb678035e7e0b2519c2cc` (2026-10-09)
+- **Type:** CWE-306 missing authentication (Telegram webhook secret not verified)
+- **Impact:** with default-empty `TELEGRAM_ALLOWED_CHAT_IDS`, forged Telegram updates make the bot DM the victim's shopping/inventory list to the attacker's chat (read-only)
+- **Suggested CVSS 3.1:** `AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N` → ~5.3; practically Low
+- **Full packet to paste:** [`VULNCHECK-SUBMISSION-5-evershelf.md`](./VULNCHECK-SUBMISSION-5-evershelf.md)
+- **Technical write-up:** [`evershelf-telegram-webhook-unauth.md`](./evershelf-telegram-webhook-unauth.md)
+- **Note:** EverShelf is otherwise well-hardened (fail-closed auth, pairing-based bootstrap, int-cast SQL, LAN-scoped scale SSRF). This is a marginal finding — maybe better as a maintainer hardening PR than a CVE.
+
 ---
 
 ### Recommended order
