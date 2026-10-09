@@ -49,6 +49,17 @@ One place for everything you need to submit. Channel for all of these:
 - **Technical write-up:** [`inetpanel-accounts-idor.md`](./inetpanel-accounts-idor.md)
 - **One-line:** `get_user`/`list_domains` in `api/accounts.php` omit the `canAccessDomain`/assigned-domain check that `detail`/`list`/`list_users` apply.
 
+## Submission 4 — smskit unauthenticated SMS interception  ☐ not submitted
+
+- **Supplier / product:** smskit / **smskit** (self-hosted SMS gateway)
+- **Version:** 1.0.0, `main` @ `69e4ed82e62b5dde1647fc5e0187827a0e164284` (2026-10-09)
+- **Type:** CWE-306 + CWE-200 missing authentication (unauthenticated)
+- **Impact:** remote unauth attacker reads queued outbound SMS (OTP/2FA bodies + recipient numbers) via `poll.php?device_id=<any>` and diverts them from delivery; forged inbound/reports too
+- **Suggested CVSS 3.1:** `AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:L` → ~8.2 High
+- **Full packet to paste:** [`VULNCHECK-SUBMISSION-4-smskit.md`](./VULNCHECK-SUBMISSION-4-smskit.md)
+- **Technical write-up:** [`smskit-poll-unauth-sms-interception.md`](./smskit-poll-unauth-sms-interception.md)
+- **One-line:** `api/v1/poll.php` requires no auth, auto-registers any `device_id`, and returns queued SMS `to`/`message` to it (runtime-confirmed).
+
 ---
 
 ### Recommended order
