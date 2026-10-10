@@ -4,10 +4,10 @@ Submit at **https://vulncheck.com/advisories/report** (or **disclosures@vulnchec
 Fill the two `<...>` placeholders.
 
 ### Name to be credited
-`<your name or pseudonym — or blank>`
+Abdulloh Nuriddinov (GitHub: 4bdull0hh)
 
 ### Contact email
-`<your contact email>`
+abdullohnuriddinov677@gmail.com
 
 ### How you came across this
 Independent source review (AI-assisted).

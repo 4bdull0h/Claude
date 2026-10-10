@@ -11,10 +11,10 @@
 ---
 
 ### Name to be credited
-`<your name or pseudonym — or leave blank for anonymity>`
+Abdulloh Nuriddinov (GitHub: 4bdull0hh)
 
 ### Contact email
-`<your contact email>`
+abdullohnuriddinov677@gmail.com
 
 ### How you came across this
 Independent security review of the public source (static audit + a code-level
