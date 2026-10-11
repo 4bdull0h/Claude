@@ -71,6 +71,18 @@ One place for everything you need to submit. Channel for all of these:
 - **Technical write-up:** [`evershelf-telegram-webhook-unauth.md`](./evershelf-telegram-webhook-unauth.md)
 - **Note:** EverShelf is otherwise well-hardened (fail-closed auth, pairing-based bootstrap, int-cast SQL, LAN-scoped scale SSRF). This is a marginal finding — maybe better as a maintainer hardening PR than a CVE.
 
+## Submission 6 — kuwo-music-relay unauthenticated SSRF  ☐ not submitted
+
+- **Supplier / product:** cdyUuu / **kuwo-music-relay** (single-file PHP audio-decrypt relay)
+- **Version:** 1.0.0, `main` @ `90f76911dc977bf729a8b0bb18118d4ce4c5adb8` (2026-08-19; tested 2026-10-11)
+- **Type:** CWE-918 server-side request forgery (unauthenticated, full-read)
+- **Impact:** unauth attacker makes the server fetch arbitrary internal/cloud URLs via `url=`; responses are recoverable (decrypt is keystream XOR keyed by the attacker's `ekey`) → cloud-metadata credential theft / internal API disclosure. Guard off by default; redirect-follow + DNS-rebinding bypass it even when on.
+- **Suggested CVSS 3.1:** `AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:L` → ~8.2 High
+- **Full packet to paste:** [`VULNCHECK-SUBMISSION-6-kuwo-relay-ssrf.md`](./VULNCHECK-SUBMISSION-6-kuwo-relay-ssrf.md)
+- **Technical write-up:** [`kuwo-music-relay-unauth-ssrf.md`](./kuwo-music-relay-unauth-ssrf.md)
+- **PoC:** [`poc/kuwo-ssrf-request-poc.sh`](./poc/kuwo-ssrf-request-poc.sh) (+ `poc/kuwo-internal-server.php`) — relay fetches an attacker-chosen internal URL (runtime-confirmed); [`poc/kuwo-ssrf-readability.php`](./poc/kuwo-ssrf-readability.php) — recovers the fetched bytes from the relay's output.
+- **One-line:** `decrypt.php?url=<any>` has no auth and no host allow-list, `RELAY_ALLOW_PRIVATE_IP` ships `true` (guard off), and the XOR decryption is keyed by the attacker's `ekey` → readable SSRF.
+
 ---
 
 ### Recommended order
