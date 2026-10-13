@@ -83,6 +83,19 @@ One place for everything you need to submit. Channel for all of these:
 - **PoC:** [`poc/kuwo-ssrf-request-poc.sh`](./poc/kuwo-ssrf-request-poc.sh) (+ `poc/kuwo-internal-server.php`) — relay fetches an attacker-chosen internal URL (runtime-confirmed); [`poc/kuwo-ssrf-readability.php`](./poc/kuwo-ssrf-readability.php) — recovers the fetched bytes from the relay's output.
 - **One-line:** `decrypt.php?url=<any>` has no auth and no host allow-list, `RELAY_ALLOW_PRIVATE_IP` ships `true` (guard off), and the XOR decryption is keyed by the attacker's `ekey` → readable SSRF.
 
+## Submission 7 — pricebuddy authenticated SSRF (redirect bypass)  ☐ not submitted
+
+- **Supplier / product:** jez500 / **pricebuddy** (self-hosted price tracker, Laravel + Filament) — dep `jez500/web-scraper-for-laravel ^1.0.9`
+- **Version:** `main` @ `34f2b2f7ca3b9853d83ec686e46ad74fc0f21e12` (2026-10-05); app version `development`
+- **Type:** CWE-918 SSRF — careful `PublicHttpUrl` guard bypassed by redirect-follow (and DNS rebinding)
+- **Auth:** authenticated (Sanctum token with `meta-extraction:extract` ability)
+- **Impact:** `/api/meta-extraction` fetches an arbitrary `url`; the guard checks only the initial host, the scraper follows redirects without re-checking → reach 169.254.169.254 / 127.0.0.1 / internal APIs. Readable: attacker-supplied `store.scrape_strategy` returns chosen slices of the internal body.
+- **Suggested CVSS 3.1:** `AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:L/A:L` → ~7.1 High
+- **Full packet to paste:** [`VULNCHECK-SUBMISSION-7-pricebuddy-ssrf.md`](./VULNCHECK-SUBMISSION-7-pricebuddy-ssrf.md)
+- **Technical write-up:** [`pricebuddy-ssrf-redirect-bypass.md`](./pricebuddy-ssrf-redirect-bypass.md)
+- **PoC:** [`poc/pricebuddy-ssrf-redirect-poc.sh`](./poc/pricebuddy-ssrf-redirect-poc.sh) (+ `pricebuddy-validator-test.php`, `pricebuddy-internal.php`, `pricebuddy-redirector.php`)
+- **One-line:** `PublicHttpUrl` validates only the submitted URL; `web-scraper-for-laravel`'s `Http::...->get()` follows redirects (never re-checked), so a public host that 302s to an internal address is fetched.
+
 ---
 
 ### Recommended order
