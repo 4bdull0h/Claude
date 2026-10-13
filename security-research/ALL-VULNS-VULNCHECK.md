@@ -2,7 +2,7 @@
 
 Channel: https://vulncheck.com/advisories/report  |  disclosures@vulncheck.com
 Reporter (all): Abdulloh Nuriddinov (GitHub: 4bdull0hh) — abdullohnuriddinov677@gmail.com
-Status: all 7 ☐ not submitted. All source review of public code; several runtime-confirmed, others as noted.
+Status: all 8 ☐ not submitted (as a set here; you have already submitted several individually). All source review of public code; several runtime-confirmed, others code-level as noted.
 
 ================================================================================
 ## Vulnerability 1
@@ -157,3 +157,26 @@ Suggested fix: disable redirect following on the scraper HTTP client, or re-run 
 Caveat: authenticated (needs an API token with the ability); code path confirmed by reading pricebuddy + the vendored scraper package; validator verdicts and redirect-follow demonstrated at runtime; full end-to-end run against a live instance not performed (needs provisioned DB/token). Sandbox has no outbound DNS / cannot bind a public IP, so the public host is represented on loopback and public IPs given as literals.
 Write-up: security-research/pricebuddy-ssrf-redirect-bypass.md
 Packet: security-research/VULNCHECK-SUBMISSION-7-pricebuddy-ssrf.md
+
+================================================================================
+## Vulnerability 8
+================================================================================
+
+Title: dreeve unauthenticated Strava webhook forgery -> arbitrary activity deletion / forced re-import
+Reporter: Abdulloh Nuriddinov (GitHub: 4bdull0hh)
+Contact: abdullohnuriddinov677@gmail.com
+Supplier: Robin Ingelbrecht (robiningelbrecht)
+Product: dreeve (composer robiningelbrecht/dreeve) - self-hosted Strava statistics dashboard (Symfony, PHP 8.5)
+Source: https://github.com/dreeveapp/dreeve
+Affected version: master @ 745074da2ac4aa32d1a68571e90230ddcd82f0c6 (2026-10-13); latest release v5.5.0 at review time
+Vulnerability type: CWE-306 (Missing Authentication for Critical Function) + CWE-345 (Insufficient Verification of Data Authenticity)
+Authentication: Unauthenticated
+CVSS 3.1: AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H -> ~9.1 (contingent on webhooks enabled; conservative .../I:H/A:L ~ 8.2)
+Impact: Unauthenticated permanent deletion of arbitrary activities from the victim's dreeve instance (and forced Strava-API re-imports / quota abuse). The public dashboard lets the attacker enumerate the victim's real activity IDs and delete the entire history.
+Root cause: POST /strava/webhook is public (AppAccessMap::PUBLIC_PATHS) and the event handler does no origin verification - verify_token only guards the GET hub.challenge handshake, owner_id/subscription_id are ignored, and Strava webhooks are unsigned. Only a global "webhooks enabled" flag gates it. Forged {"object_type":"activity","aspect_type":"delete","object_id":<id>} is queued as a WebhookEvent; the app:strava:webhooks-process cron routes delete -> ActivityRepository::markActivitiesForDeletion() (UPDATE Activity SET markedForDeletion=1) -> DeleteActivitiesMarkedForDeletionCommandHandler -> DeleteActivity (hard delete). create/update force re-imports of attacker-chosen IDs.
+Proof of concept: unauthenticated POST /strava/webhook with body {"object_type":"activity","object_id":<victim_activity_id>,"aspect_type":"delete","owner_id":1,"subscription_id":1,"event_time":1700000000}; next cron run marks + deletes it. Repeat over IDs harvested from the public /activities/{activityId} pages to wipe the history.
+Preconditions: webhooks enabled (import.webhookConfig.enabled) + import mode Strava API (ImportMode::isStravaApi) - the standard live-sync setup; endpoint must be internet-reachable for Strava, and the path is fixed with no secret.
+Suggested fix: require a per-instance shared secret on the webhook URL (unguessable path/header) validated on POST with hash_equals; verify owner_id/subscription_id against the configured athlete/subscription; ignore object_ids never imported for this athlete; rate-limit.
+Caveat: full chain confirmed by code review with exact file/line citations; not reproduced on a live instance (needs PHP 8.5 + DB + processing cron). Requires webhooks enabled + Strava-API mode (opt-in but documented first-class feature). No confidentiality impact.
+Write-up: security-research/dreeve-unauth-webhook-activity-deletion.md
+Packet: security-research/VULNCHECK-SUBMISSION-8-dreeve-webhook.md

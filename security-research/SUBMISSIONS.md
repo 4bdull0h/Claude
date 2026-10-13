@@ -96,6 +96,18 @@ One place for everything you need to submit. Channel for all of these:
 - **PoC:** [`poc/pricebuddy-ssrf-redirect-poc.sh`](./poc/pricebuddy-ssrf-redirect-poc.sh) (+ `pricebuddy-validator-test.php`, `pricebuddy-internal.php`, `pricebuddy-redirector.php`)
 - **One-line:** `PublicHttpUrl` validates only the submitted URL; `web-scraper-for-laravel`'s `Http::...->get()` follows redirects (never re-checked), so a public host that 302s to an internal address is fetched.
 
+## Submission 8 — dreeve unauthenticated Strava webhook forgery → activity deletion  ☐ not submitted
+
+- **Supplier / product:** Robin Ingelbrecht / **dreeve** (`robiningelbrecht/dreeve`) — self-hosted Strava statistics dashboard (Symfony, PHP 8.5)
+- **Version:** `master` @ `745074da2ac4aa32d1a68571e90230ddcd82f0c6` (2026-10-13); latest release v5.5.0
+- **Type:** CWE-306 + CWE-345 — public webhook with no origin verification → destructive action
+- **Auth:** unauthenticated
+- **Impact:** forged `POST /strava/webhook` `delete` events permanently delete arbitrary activities (`markedForDeletion` → `DeleteActivity`); `create`/`update` force Strava-API re-imports. Public dashboard lets the attacker enumerate the victim's activity IDs → wipe the whole history. Preconditions: webhooks enabled + Strava-API mode.
+- **Suggested CVSS 3.1:** `AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H` → ~9.1 (conservative `…/I:H/A:L` ≈ 8.2)
+- **Full packet to paste:** [`VULNCHECK-SUBMISSION-8-dreeve-webhook.md`](./VULNCHECK-SUBMISSION-8-dreeve-webhook.md)
+- **Technical write-up:** [`dreeve-unauth-webhook-activity-deletion.md`](./dreeve-unauth-webhook-activity-deletion.md)
+- **One-line:** `/strava/webhook` POST verifies nothing (verify_token only guards the GET handshake; Strava is unsigned), so forged `delete` events route to `markActivitiesForDeletion()` → hard delete.
+
 ---
 
 ### Recommended order
